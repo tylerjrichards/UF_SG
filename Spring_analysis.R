@@ -4,6 +4,7 @@ library(tidyr)
 library(ggplot2)
 
 Spring_elections <- read.csv(here("Spring_total.csv"))
+Fall_elections <- read.csv(here("Fall_total.csv"))
 
 head(Spring_elections)
 
