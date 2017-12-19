@@ -9,7 +9,7 @@ Fall_elections <- read.csv(here("Fall_total.csv"))
 #Let's convert the votes and years column to numeric values for Spring and Fall
 
 Spring_elections$Votes <- as.numeric(as.character(Spring_elections$Votes))
-Spring_elections$Year <- as.Date(as.character(Spring_elections$Year))
+Spring_elections$Year <- as.numeric(as.character(Spring_elections$Year))
 
 Fall_elections$Votes <- as.numeric(as.character(Fall_elections$Votes))
 Fall_elections$Year <- as.numeric(as.character(Fall_elections$Year))
@@ -20,7 +20,7 @@ Fall_elections <- Fall_elections %>%
   mutate_all(funs(toupper)) %>% 
   mutate(Party = ifelse(Party == "SWAMP PARTY", "SWAMP", Party)) %>% 
   mutate(Party = ifelse(Party == "THE STUDENTS PARTY", "STUDENTS PARTY", Party)) %>% 
-  mutate(Won = as.logical(Won)) %>% 
+  mutate(Won = as.logical(Won)) %>%
   mutate(Election_date = "FALL")
 
 #Now for Spring
