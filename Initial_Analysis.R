@@ -14,7 +14,22 @@ Fall_elections <- Fall_elections %>%
   mutate_all(funs(toupper)) %>% 
   mutate(Party = ifelse(Party == "SWAMP PARTY", "SWAMP", Party)) %>% 
   mutate(Party = ifelse(Party == "THE STUDENTS PARTY", "STUDENTS PARTY", Party)) %>% 
-  mutate(Won = as.logical(Won))
+  mutate(Won = as.logical(Won)) %>% 
+  mutate(Election_date = "FALL")
+unique(Fall_elections$Party)
+
+#Now for Spring
+unique(Spring_elections$Party)
+Spring_elections <- Spring_elections %>% 
+  replace_na(list(Won = FALSE)) %>% 
+  mutate(Party = as.character(Party)) %>%
+  mutate(Party = ifelse( Party == "The_Students", "Students Party", Party)) %>% 
+  mutate(Party = ifelse(Party == "FSP", "Florida Students Party", Party)) %>%
+  mutate(Party = ifelse(Party == "Vision_2000" | Party == "Vision_2001", "Vision", Party)) %>% 
+  mutate_all(funs(toupper)) %>% 
+  mutate(Election_date = "SPRING") %>% 
+  mutate(Won = as.logical(Won)) %>% 
+  filter(!is.na(Spring_elections$Votes))
 
 #note that Student Party is different that Students Party, which appeared a few years later. 
 
