@@ -1,19 +1,11 @@
+library(here)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-setwd("~/Documents/Fall17/Projects/UF_SG_Data")
+Spring_elections <- read.csv(here("Spring_total.csv"))
+Fall_elections <- read.csv(here("Fall_total.csv"))
 
-Fall_elections <- read.csv("Fall_total.csv")
-head(Fall_elections)
-unique(Fall_elections$Party)
-
-#let's do some checks on the data
-Num_Doubles <- nrow(Fall_elections[duplicated(Fall_elections[c("First_Name", "Last_Name", "Votes", "Year")]),])
-
-Num_Candidates <- Fall_elections %>% 
-  group_by(Year, Party, Seat) %>% 
-  summarise(Candidates = n())
 
 
 #Now we need to group by the fall elections and edit some party names
@@ -48,12 +40,3 @@ ggplot(Party_success, aes(x=Year, y=Seats_won, color = Est, size = 1.5)) + geom_
 Seat_breakdown <- Fall_elections %>% 
   left_join(Establishment, by = c("Party", "Year")) %>% 
   group_by(Seat, Est)
-
-
-
-
-
-
-
-
-  
