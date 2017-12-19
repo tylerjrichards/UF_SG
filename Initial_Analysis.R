@@ -74,3 +74,11 @@ ggplot(Party_success_senate[Party_success_senate$Election_date == "SPRING",], ae
 Seat_breakdown <- Fall_elections %>% 
   left_join(Establishment, by = c("Party", "Year")) %>% 
   group_by(Seat, Est)
+
+#Let's see how many votes have been won in the past for the elections
+
+Spring_success <- Spring_elections %>%
+  filter(Won == "TRUE") 
+
+Fall_success <- Fall_elections %>%
+  filter(Won == "TRUE") 
