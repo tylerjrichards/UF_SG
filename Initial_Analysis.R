@@ -16,10 +16,8 @@ Fall_elections <- Fall_elections %>%
   mutate(Party = ifelse(Party == "THE STUDENTS PARTY", "STUDENTS PARTY", Party)) %>% 
   mutate(Won = as.logical(Won)) %>% 
   mutate(Election_date = "FALL")
-unique(Fall_elections$Party)
 
 #Now for Spring
-unique(Spring_elections$Party)
 Spring_elections <- Spring_elections %>% 
   replace_na(list(Won = FALSE)) %>% 
   mutate(Party = as.character(Party)) %>%
@@ -32,25 +30,46 @@ Spring_elections <- Spring_elections %>%
   filter(!is.na(Spring_elections$Votes))
 
 #note that Student Party is different that Students Party, which appeared a few years later. 
-
-Establishment <- Fall_elections %>% 
+#let's get establishment vs independent
+Est_Fall <- Fall_elections %>% 
   filter(Seat == "DISTRICT A") %>% 
   group_by(Party, Year, Seat) %>% 
   summarise(Seats_won = sum(Won), Candidates = n()) %>% 
-  mutate(Est = ifelse(Seats_won > 1, "System", "Independent")) %>% 
+  mutate(Est = ifelse(Seats_won > 1, "SYSTEM", "INDEPENDENT")) %>% 
   select(Party, Year, Est)
 
 
-Party_success <- Fall_elections %>% 
-  group_by(Party, Year) %>% 
+Est_Spring <- Spring_elections %>% 
+  filter(Seat == "BUSINESS") %>% 
+  group_by(Party, Year, Seat) %>% 
   summarise(Seats_won = sum(Won), Candidates = n()) %>% 
-  mutate(Percent_success =  100 * (Seats_won / Candidates)) %>% 
-  left_join(Establishment, by = c("Party", "Year"))
+  mutate(Est = ifelse(Seats_won > 1, "SYSTEM", "INDEPENDENT")) %>% 
+  select(Party, Year, Est)
 
+Establishment_total <- rbind(Est_Spring, Est_Fall)
+
+Election_total <- Fall_elections %>% 
+  bind_rows(Spring_elections) %>% 
+  left_join(Establishment_total, by = c("Party", "Year")) %>% 
+  distinct(Seat, Year, Party, First_Name, Last_Name, Votes, .keep_all = TRUE) %>% 
+  mutate(Est = ifelse(is.na(Est), "INDEPENDENT", Est))
+
+Check_candidate_totals <- Election_total %>% 
+  group_by(Party, Year, Election_date) %>% 
+  count(Est)
+
+Party_success_senate <- Election_total %>% 
+  filter(Seat != "STUDENT BODY PRESIDENT" & Seat != "TREASURER") %>% 
+  group_by(Party, Year, Election_date, Est) %>% 
+  summarise(Seats_won = sum(Won), Candidates = n()) %>% 
+  mutate(Percent_success =  100 * (Seats_won / Candidates))
+  
+#at this point, we need to look though the party success file as well as the check candidate totals to make sure everything is correct
 
 ggplot(Party_success, aes(x=Year, y=Seats_won)) + geom_point() + geom_text(label = Party_success$Party)
 
-ggplot(Party_success, aes(x=Year, y=Seats_won, color = Est, size = 1.5)) + geom_point() + ylab("Number of Seats Won") + theme(legend.title=element_blank()) + guides(size=FALSE)
+#Spring vis
+ggplot(Party_success_senate[Party_success_senate$Election_date == "SPRING",], aes(x=Year, y=Seats_won, color = Est, size = 1.5)) + geom_point() + ylab("Number of Seats Won") + theme(legend.title=element_blank()) + guides(size=FALSE)
 
 Seat_breakdown <- Fall_elections %>% 
   left_join(Establishment, by = c("Party", "Year")) %>% 
