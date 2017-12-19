@@ -6,7 +6,13 @@ library(ggplot2)
 Spring_elections <- read.csv(here("Spring_total.csv"))
 Fall_elections <- read.csv(here("Fall_total.csv"))
 
+#Let's convert the votes and years column to numeric values for Spring and Fall
 
+Spring_elections$Votes <- as.numeric(as.character(Spring_elections$Votes))
+Spring_elections$Year <- as.Date(as.character(Spring_elections$Year))
+
+Fall_elections$Votes <- as.numeric(as.character(Fall_elections$Votes))
+Fall_elections$Year <- as.numeric(as.character(Fall_elections$Year))
 
 #Now we need to group by the fall elections and edit some party names
 Fall_elections <- Fall_elections %>% 
@@ -31,6 +37,7 @@ Spring_elections <- Spring_elections %>%
 
 #note that Student Party is different that Students Party, which appeared a few years later. 
 #let's get establishment vs independent
+
 Est_Fall <- Fall_elections %>% 
   filter(Seat == "DISTRICT A") %>% 
   group_by(Party, Year, Seat) %>% 
@@ -66,16 +73,16 @@ Party_success_senate <- Election_total %>%
   
 #at this point, we need to look though the party success file as well as the check candidate totals to make sure everything is correct
 
-ggplot(Party_success, aes(x=Year, y=Seats_won)) + geom_point() + geom_text(label = Party_success$Party)
+ggplot(Party_success_senate, aes(x=Year, y=Seats_won)) + geom_point() + geom_text(label = Party_success_senate$Party)
 
 #Spring vis
 ggplot(Party_success_senate[Party_success_senate$Election_date == "SPRING",], aes(x=Year, y=Seats_won, color = Est, size = 1.5)) + geom_point() + ylab("Number of Seats Won") + theme(legend.title=element_blank()) + guides(size=FALSE)
 
 Seat_breakdown <- Fall_elections %>% 
-  left_join(Establishment, by = c("Party", "Year")) %>% 
+  left_join(Est_Fall, by = c("Party", "Year")) %>% 
   group_by(Seat, Est)
 
-#Let's see how many votes have been won in the past for the elections
+#Let's sort by who won
 
 Spring_success <- Spring_elections %>%
   filter(Won == "TRUE") 
