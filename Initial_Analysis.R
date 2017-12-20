@@ -36,6 +36,7 @@ Spring_elections <- Spring_elections %>%
   filter(!is.na(Spring_elections$Votes))
 
 #note that Student Party is different that Students Party, which appeared a few years later. 
+
 #let's get establishment vs independent
 
 Est_Fall <- Fall_elections %>% 
@@ -44,7 +45,6 @@ Est_Fall <- Fall_elections %>%
   summarise(Seats_won = sum(Won), Candidates = n()) %>% 
   mutate(Est = ifelse(Seats_won > 1, "SYSTEM", "INDEPENDENT")) %>% 
   select(Party, Year, Est)
-
 
 Est_Spring <- Spring_elections %>% 
   filter(Seat == "BUSINESS") %>% 
@@ -71,7 +71,7 @@ Party_success_senate <- Election_total %>%
   summarise(Seats_won = sum(Won), Candidates = n()) %>% 
   mutate(Percent_success =  100 * (Seats_won / Candidates))
   
-#at this point, we need to look though the party success file as well as the check candidate totals to make sure everything is correct
+#At this point, we need to look though the party success file as well as the check candidate totals to make sure everything is correct
 
 ggplot(Party_success_senate, aes(x=Year, y=Seats_won)) + geom_point() + geom_text(label = Party_success_senate$Party)
 
@@ -81,6 +81,17 @@ ggplot(Party_success_senate[Party_success_senate$Election_date == "SPRING",], ae
 Seat_breakdown <- Fall_elections %>% 
   left_join(Est_Fall, by = c("Party", "Year")) %>% 
   group_by(Seat, Est)
+
+#Let's ensure that all of the candidates are present in the data
+
+Seatswon_Year <- Party_success_senate %>% 
+  group_by(Year) %>% 
+  summarize(Won = sum(Seats_won))
+
+#This will give us a breakdown of how many seats were won each year, we can cross-refrence this the seats allotted each year
+#This will not match up for all years because there we no candidates who ran in certain elections
+
+#Now that the data is all checked we're good to go with analysis!
 
 #Let's sort by who won
 
