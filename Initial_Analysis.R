@@ -100,3 +100,15 @@ Spring_success <- Spring_elections %>%
 
 Fall_success <- Fall_elections %>%
   filter(Won == "TRUE") 
+
+
+#there are a few things we're going to want to do
+#the first is write a function for how long a party has been around
+
+#the general idea is for every year, if the party didn't exist in the previous year make the age 1
+#if it did, make the age = age + 1
+#I have to go rn, but i'll probably be able to write this function later, shouldn't be too bad.
+#i'm sure there are better ways of doing this also, this is just the first thing I thought of
+for i in unique(Total_elections$Year){
+  
+}
