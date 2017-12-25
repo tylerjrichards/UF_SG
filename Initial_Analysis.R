@@ -4,7 +4,7 @@ library(tidyr)
 library(ggplot2)
 
 Spring_elections <- read.csv(here("Spring_total.csv"))
-Fall_elections <- read.csv(here("Fall_total.csv"))
+Fall_elections <- read.csv(here("Fall_total_v2.csv"))
 
 #Let's convert the votes and years column to numeric values for Spring and Fall
 
@@ -112,3 +112,20 @@ Fall_success <- Fall_elections %>%
 for i in unique(Total_elections$Year){
   
 }
+
+#Let's index all unique parties
+parties <-unique(Election_total$Party)
+
+#Convert all election years into numeric values so we can utilize that in the function
+Election_total$Year <- as.numeric(as.character(Election_total$Year))
+
+#Attempt at loop / function
+#Rough idea / need to figure out once it gives T/F values transferring that into new col.
+for (i Year in Election_total$Year) {
+  ifelse(parties %in% Election_total$Party) {
+    mutate(Election_total, Age = )
+  } else {
+    mutate(Election_total, Age = )
+    {
+}      
+  
