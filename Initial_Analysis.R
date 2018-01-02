@@ -55,11 +55,16 @@ Est_Spring <- Spring_elections %>%
 
 Establishment_total <- rbind(Est_Spring, Est_Fall)
 
+Party_age <- read.csv('year_eval.csv')
+Party_age$Year <- as.character(Party_age$Year)
+
 Election_total <- Fall_elections %>% 
   bind_rows(Spring_elections) %>% 
   left_join(Establishment_total, by = c("Party", "Year")) %>% 
   distinct(Seat, Year, Party, First_Name, Last_Name, Votes, .keep_all = TRUE) %>% 
-  mutate(Est = ifelse(is.na(Est), "INDEPENDENT", Est))
+  mutate(Est = ifelse(is.na(Est), "INDEPENDENT", Est)) %>% 
+  left_join(Party_age, by = c("Party", "Year", "Election_date")) %>% 
+  mutate(X = NULL)
 
 Check_candidate_totals <- Election_total %>% 
   group_by(Party, Year, Election_date) %>% 
@@ -101,41 +106,4 @@ Spring_success <- Spring_elections %>%
 Fall_success <- Fall_elections %>%
   filter(Won == "TRUE") 
 
-
-#there are a few things we're going to want to do
-#the first is write a function for how long a party has been around
-
-#the general idea is for every year, if the party didn't exist in the previous year make the age 1
-#if it did, make the age = age + 1
-#I have to go rn, but i'll probably be able to write this function later, shouldn't be too bad.
-#i'm sure there are better ways of doing this also, this is just the first thing I thought of 
-
-Year_data <- unique(Election_total[,c('Party', 'Year', 'Election_date')])
-Year_data$age <- 1
-x <- unique(Election_total$Year)
-x <- x[-length(x)]
-#my.data.frame <- data[(data$V1 > 2) & (data$V2 < 4), ]
-Year_data$age[(Year_data$Year == 2000) & (Year_data$Party == 'VISION') & (Year_data$Election_date == "SPRING")] = 7
-
-for(i in c(2001:2017)){
-  print(i)
-  if
-  
-}
-
-#Let's index all unique parties
-parties <-unique(Election_total$Party)
-
-#Convert all election years into numeric values so we can utilize that in the function
-Election_total$Year <- as.numeric(as.character(Election_total$Year))
-
-#Attempt at loop / function
-#Rough idea / need to figure out once it gives T/F values transferring that into new col.
-for (i Year in Election_total$Year) {
-  ifelse(parties %in% Election_total$Party) {
-    mutate(Election_total, Age = )
-  } else {
-    mutate(Election_total, Age = )
-    {
-}      
-  
+write.csv(Election_total, "Cleaned_SG_Election.csv")
