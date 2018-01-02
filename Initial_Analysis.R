@@ -109,7 +109,17 @@ Fall_success <- Fall_elections %>%
 #if it did, make the age = age + 1
 #I have to go rn, but i'll probably be able to write this function later, shouldn't be too bad.
 #i'm sure there are better ways of doing this also, this is just the first thing I thought of 
-for i in unique(Total_elections$Year){
+
+Year_data <- unique(Election_total[,c('Party', 'Year', 'Election_date')])
+Year_data$age <- 1
+x <- unique(Election_total$Year)
+x <- x[-length(x)]
+#my.data.frame <- data[(data$V1 > 2) & (data$V2 < 4), ]
+Year_data$age[(Year_data$Year == 2000) & (Year_data$Party == 'VISION') & (Year_data$Election_date == "SPRING")] = 7
+
+for(i in c(2001:2017)){
+  print(i)
+  if
   
 }
 
