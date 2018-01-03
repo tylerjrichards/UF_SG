@@ -1,4 +1,5 @@
 library(ggplot2)
+library(dplyr)
 Election_data <- read.csv("Cleaned_SG_Election.csv")
 summary(Election_data)
 
@@ -11,8 +12,7 @@ election_by_party <- Election_data %>%
 #plot party success over the years
 
 ggplot(election_by_party, aes(x = Age, y = Percent_won, color = Est, size = .2)) +
-  geom_point() + ggtitle("Dominance of System Parties by Year") + guides(size = F)
-ggsave("Wins_by_party.jpg")
+  geom_point() + ggtitle("Dominance of System Parties by Year") + guides(size = F) + xlab("Age of Party") + ylab("Winning Percentage")
 #Power ranking by seat
 
 election_by_seat <- Election_data %>% 
@@ -22,8 +22,7 @@ election_by_seat <- Election_data %>%
 ggplot(election_by_seat[election_by_seat$Est == "INDEPENDENT",], aes(x = reorder(Seat, Percent_Won), y = Percent_Won)) +
   geom_col() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  ggtitle("Power Ranking of Senate Seats")
-ggsave("Power_Ranking_Seats.jpg")
+  ggtitle("Power Ranking of Senate Seats") + xlab("Senate Seat")
 
 
 
