@@ -12,7 +12,7 @@ election_by_party <- Election_data %>%
 
 ggplot(election_by_party, aes(x = Age, y = Percent_won, color = Est, size = .2)) +
   geom_point() + ggtitle("Dominance of System Parties by Year") + guides(size = F)
-
+ggsave("Wins_by_party.jpg")
 #Power ranking by seat
 
 election_by_seat <- Election_data %>% 
@@ -23,7 +23,7 @@ ggplot(election_by_seat[election_by_seat$Est == "INDEPENDENT",], aes(x = reorder
   geom_col() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ggtitle("Power Ranking of Senate Seats")
-
+ggsave("Power_Ranking_Seats.jpg")
 
 
 
