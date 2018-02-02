@@ -1,5 +1,5 @@
 library(ggplot2)
-library(dplyr)
+library(tidyverse)
 library(readr)
 Election_data <- read_csv("Cleaned_SG_Election.csv")
 summary(Election_data)
@@ -66,7 +66,9 @@ Election_data <- left_join(Election_data, Number_of_Opponents_by_Seat, by = c("Y
 
 #we'll start with Spring data
 Spring_election_data <- Election_data %>% 
-  filter(Election_date == "SPRING")
+  filter(Election_date == "SPRING") %>% 
+  select(-c(X1, First_name, Last_name, Party, Votes, Election_date))
+
 
 #let's do train and test set
 smp_size <- floor(0.75 * nrow(Spring_election_data))
@@ -75,14 +77,20 @@ smp_size <- floor(0.75 * nrow(Spring_election_data))
 set.seed(12345)
 train_ind <- sample(seq_len(nrow(Spring_election_data)), size = smp_size)
 
-
-train <- Spring_election_data[train_ind, ]
-test <- Spring_election_data[-train_ind, ]
+#subset(mydata, age >= 20
+train <- subset(Spring_election_data, !(Year %in% c(2015,2016, 2017)))
+test <- subset(Spring_election_data, Year %in% c(2015, 2016, 2017))
 
 #now let's try a logistic regression model
-model <- glm(Survived ~.,family=binomial(link='logit'),data=train)
-Election_model <- glm(Won ~ Seat + Age_Semester +  data = train, family = binomial(link = 'logit'))
+Election_model <- glm(Won ~ -Year, family = binomial(link = 'logit'), data = train)
 
-#continue after, want to make more columns
+library(broom)
+tidy(Election_model)
 
+summary(Election_model)
+
+anova(Election_model, test="Chisq")
+
+predict(Election_model, test, type = "response")
+#now I can't figure out how to predict things well, will approach again later
 
