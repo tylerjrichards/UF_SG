@@ -1,6 +1,9 @@
 library(ggplot2)
 library(tidyverse)
 library(readr)
+library(caTools)
+library(broom)
+library(e1071)
 Election_data <- read_csv("Cleaned_SG_Election.csv")
 summary(Election_data)
 
@@ -66,31 +69,64 @@ Election_data <- left_join(Election_data, Number_of_Opponents_by_Seat, by = c("Y
 
 #we'll start with Spring data
 Spring_election_data <- Election_data %>% 
-  filter(Election_date == "SPRING") %>% 
-  select(-c(X1, First_name, Last_name, Party, Votes, Election_date))
+  filter(Election_date == "SPRING" & Seat != "FORESTRY" & Seat != "NRE" & Est != "NPA" & Seat != "STUDENT BODY PRESIDENT" & Seat != "FORESTRY_NRE") %>% 
+  select(-c(X1, First_name, Last_name, Party, Votes, Election_date)) %>% 
+  mutate(Won = ifelse(Won == T, "Yes", "No")) %>% 
+  mutate(Won = as.factor(Won))
+Spring_election_data[is.na(Spring_election_data)] <- 0
 
 
-#let's do train and test set
-smp_size <- floor(0.75 * nrow(Spring_election_data))
-
-## set the seed to make your partition reproductible
 set.seed(12345)
-train_ind <- sample(seq_len(nrow(Spring_election_data)), size = smp_size)
+split <- sample.split(Spring_election_data$Won, SplitRatio = .8)
+Spring_train <- subset(Spring_election_data, split == TRUE)
+Spring_test <- subset(Spring_election_data, split == FALSE)
+Election_model_Spring <- glm(Won ~ . -Year +Seat*Est -Seat, family = binomial(link = 'logit'), data = Spring_train, na.action = na.omit)
+summary(Election_model_Spring)
 
-#subset(mydata, age >= 20
-train <- subset(Spring_election_data, !(Year %in% c(2015,2016, 2017)))
-test <- subset(Spring_election_data, Year %in% c(2015, 2016, 2017))
+predict <- predict(Election_model_Spring, newdata = Spring_test, type = 'response')
+table(Spring_test$Won, predict > .5)
+#this gives us around a ~83% success rate
+Spring_model_params <- tidy(Election_model_Spring)
 
-#now let's try a logistic regression model
-Election_model <- glm(Won ~ -Year, family = binomial(link = 'logit'), data = train)
+#ok that works, but it doesn't work that well
+#let's try classification boundaries instead of logistic regression
 
-library(broom)
-tidy(Election_model)
+#switch to factor
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+library(caret)
+svm_Linear <- train(Won ~ . -Year +Seat*Est -Seat, data = Spring_train, method = "svmLinear",
+                    trControl=trctrl,
+                    preProcess = c("center", "scale"),
+                    tuneLength = 10)
+prediction <- predict(svm_Linear, Spring_test)
+confusionMatrix(prediction, Spring_test$Won)
 
-summary(Election_model)
+#from this, we get around 81% which is worse
 
-anova(Election_model, test="Chisq")
+#let's try a random forest, which would make sense here as well
+#random forests can't have columns that are character, so we'll transform each character column to factor
+library(randomForest)
+Spring_election_data[sapply(Spring_election_data, is.character)] <- lapply(Spring_election_data[sapply(Spring_election_data, is.character)],as.factor)
+Spring_train <- subset(Spring_election_data, split == TRUE)
+Spring_test <- subset(Spring_election_data, split == FALSE)
 
-predict(Election_model, test, type = "response")
-#now I can't figure out how to predict things well, will approach again later
+rf = randomForest(Won ~ . -Year +Seat*Est -Seat,  
+                  ntree = 100,
+                  data = Spring_train)
+plot(rf)
+varImpPlot(rf,  
+           sort = T,
+           n.var=10,
+           main="Top 10 - Variable Importance")
+Spring_test$predicted = predict(rf, Spring_test)
+confusionMatrix(data = Spring_test$predicted, 
+                reference = Spring_test$Won)
+#this is great! brings it all the way up to 86%
+#now let's see what is predicted for this next election
 
+Spring_2018 <- read_csv("2018_Candidates.csv")
+Spring_2018[sapply(Spring_2018, is.character)] <- lapply(Spring_2018[sapply(Spring_2018, is.character)],as.factor)
+Impact <- Spring_2018 %>% 
+  filter(Party == "Impact") %>% 
+  select(-c(Party, Year))
+Impact$pred <- predict(rf, Impact)
