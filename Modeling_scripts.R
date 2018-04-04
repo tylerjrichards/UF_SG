@@ -69,7 +69,7 @@ Election_data <- left_join(Election_data, Number_of_Opponents_by_Seat, by = c("Y
 
 #we'll start with Spring data
 Spring_election_data <- Election_data %>% 
-  filter(Election_date == "SPRING" & Seat != "FORESTRY" & Seat != "NRE" & Est != "NPA" & Seat != "STUDENT BODY PRESIDENT" & Seat != "FORESTRY_NRE") %>% 
+  filter(Election_date == "SPRING" & Seat != "FORESTRY" & Seat != "NRE" & Est != "NPA" & Seat != "STUDENT BODY PRESIDENT" & Seat != "TREASURER" & Seat != "FORESTRY_NRE") %>% 
   select(-c(X1, First_name, Last_name, Party, Votes, Election_date)) %>% 
   mutate(Won = ifelse(Won == T, "Yes", "No")) %>% 
   mutate(Won = as.factor(Won))
@@ -86,7 +86,16 @@ summary(Election_model_Spring)
 predict <- predict(Election_model_Spring, newdata = Spring_test, type = 'response')
 table(Spring_test$Won, predict > .5)
 #this gives us around a ~83% success rate
-Spring_model_params <- tidy(Election_model_Spring)
+
+#let's visualize the parameters to rank the independent seats
+
+Spring_logistic_ind <- Election_model_Spring %>% 
+  tidy() %>% 
+  filter(grepl("EstIND", term)) %>% 
+  mutate(term = sub("\\:.*", "\\:", term)) %>% 
+  mutate(term = substr(term, 5, 100)) 
+
+logistic_model_params <- ggplot(Spring_logistic_ind, aes(x = reorder(term, -estimate),  estimate)) + geom_bar(stat="identity") + coord_flip() + ylab("Relative Likelihood of Success: Left = System") + xlab("Seat") + labs(title = "What Seats are Independent Parties Likely to Win? A parameter estimation using Logistic Regression")
 
 #ok that works, but it doesn't work that well
 #let's try classification boundaries instead of logistic regression
@@ -110,9 +119,9 @@ Spring_election_data[sapply(Spring_election_data, is.character)] <- lapply(Sprin
 Spring_train <- subset(Spring_election_data, split == TRUE)
 Spring_test <- subset(Spring_election_data, split == FALSE)
 
-rf = randomForest(Won ~ . -Year +Seat*Est -Seat,  
-                  ntree = 100,
-                  data = Spring_train)
+rf = randomForest(Won ~ . -Year +Seat*Est -Seat + Est*Age_Semester - Age_Semester,  
+                  ntree = 150,
+                  data = Spring_election_data)
 plot(rf)
 varImpPlot(rf,  
            sort = T,
@@ -128,5 +137,63 @@ Spring_2018 <- read_csv("2018_Candidates.csv")
 Spring_2018[sapply(Spring_2018, is.character)] <- lapply(Spring_2018[sapply(Spring_2018, is.character)],as.factor)
 Impact <- Spring_2018 %>% 
   filter(Party == "Impact") %>% 
-  select(-c(Party, Year))
-Impact$pred <- predict(rf, Impact)
+  select(-c(Party)) %>% 
+  mutate(Won = NA)
+
+Total_elections <- rbind(Spring_election_data, Impact) #to homogenize the data
+
+Impact_2018_Spring <- Total_elections %>% 
+  filter(Est == "SYSTEM" & Year == 2018)
+Train_Spring <- Total_elections %>% 
+  filter(Year != 2018)
+rf_2018 <- randomForest(Won ~ . -Year +Seat*Est -Seat + Est*Age_Semester - Age_Semester,  
+                         ntree = 100,
+                         data = Train_Spring)
+Results_2018 <- data.frame(Seats = Impact_2018_Spring$Seat, Result = predict(rf_2018, Impact_2018_Spring))
+
+
+svm_Linear <- train(Won ~ . -Year +Seat*Est -Seat, data = Train_Spring, method = "svmLinear",
+                    trControl=trctrl,
+                    preProcess = c("center", "scale"),
+                    tuneLength = 10)
+Impact_2018_Spring$SVM_prediction <- predict(svm_Linear, Impact_2018_Spring)
+
+
+test <- Total_elections %>% 
+  filter(Year == 2017 & Est == "INDEPENDENT")
+predict(rf_2018, test)
+  
+
+# my next effort will be to predict the number of votes in an individual seat using a poisson approximator
+# I will only do this for the establishment party 
+
+
+
+Election_data_Poisson <- Election_data %>% 
+  filter(Election_date == "SPRING" & Seat != "FORESTRY" & Seat != "NRE" & Est != "NPA" & Seat != "STUDENT BODY PRESIDENT" & Seat != "TREASURER" & Seat != "FORESTRY_NRE") %>% 
+  select(-c(X1, First_name, Last_name, Won, Election_date)) %>% 
+  group_by(Seat, Year, Party) %>% 
+  summarise(Votes = mean(Votes),
+            Est = unique(Est),
+            Age_Semester = mean(Age_Semester),
+            Slate_Size_Previous = mean(Slate_Size_Previous_Year, na.rm = T),
+            Win_Percent_Previous_Year = mean(Win_Percent_Previous_Year),
+            Number_of_Opponents_by_Seat = mean(Num_Opponents_by_Seat),
+            Num_Parties = mean(Num_Parties))
+
+Election_data_Poisson[is.na(Election_data_Poisson)] <- 0
+split <- sample.split(Election_data_Poisson$Votes, SplitRatio = .8)
+Poisson_split_train <- subset(Election_data_Poisson, split == TRUE)
+Poisson_split_test <- subset(Election_data_Poisson, split == FALSE)
+Poisson_model_spring <- glm(Votes ~ . -Year +Seat*Est -Seat -Party, data = Poisson_split_train, family = "poisson")
+
+x <- data.frame(Seat = "ENGINEERING", Est = "SYSTEM", Age_Semester = 1, Slate_Size_Previous = 50, Win_Percent_Previous_Year = .6, Number_of_Opponents_by_Seat = 2, Num_Parties = 2, Year = 2018, Party = "IMPACT")
+predict(Poisson_model_spring, x)
+
+#when we do this, we drastically underestimate the number of votes per year because we are comparing two different populations
+#need to change the number of votes by looking at the percentage of population
+
+old_data <- read_csv("C:/Users/Tyler/Documents/Data_Projects/SG_Models/sgtotal.csv")
+old_data %>% 
+  group_by(College, Year) %>% 
+  summarise(pop = mean(`Population of area/college`))
