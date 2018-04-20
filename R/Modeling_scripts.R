@@ -47,10 +47,10 @@ election_by_seat <- Election_data %>%
 library(RColorBrewer)
 colourCount <- length(unique(election_by_seat$Seat)) # number of levels
 getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
-ggplot(election_by_seat[election_by_seat$Est == "INDEPENDENT",], aes(x = reorder(Seat, Percent_Won), y = Percent_Won, fill = Seat)) +
+ggplot(election_by_seat[(election_by_seat$Est == "INDEPENDENT" & election_by_seat$Seat != "NRE" & election_by_seat$Seat != "FORESTRY" & election_by_seat$Seat != "FORESTRY_NRE"),], aes(x = reorder(Seat, Percent_Won), y = Percent_Won, fill = Seat)) +
   scale_fill_manual(values = getPalette(colourCount)) + 
   geom_col() +
-  ggtitle("Power Ranking of Senate Seats") + xlab("Senate Seat") +
+  ggtitle("Power Ranking of Senate Seats for Independent Parties") + xlab("Senate Seat") +
   theme_fivethirtyeight() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
   guides(fill = F)
