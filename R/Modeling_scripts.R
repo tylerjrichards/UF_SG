@@ -4,12 +4,14 @@ library(readr)
 library(caTools)
 library(broom)
 library(e1071)
-Election_data <- read_csv("Cleaned_SG_Election.csv")
+library(ggthemes)
+Election_data <- read_csv("Data/Cleaned_SG_Election.csv")
 summary(Election_data)
 
 #Before I start modeling, I usually begin by visualizing the data and then I go from there
 
 election_by_party <- Election_data %>% 
+  mutate(Year = as.numeric(Year)) %>% 
   group_by(Year, Party, Est, Election_date) %>% 
   filter(Seat != "STUDENT BODY PRESIDENT" & Seat != "TREASURER") %>% 
   summarise(Votes_avg = mean(Votes),  Candidates_won = sum(Won), Candidates = n(), Percent_won = sum(Won)/n(), Age = mean(Age_Semester))
@@ -17,17 +19,42 @@ election_by_party <- Election_data %>%
 #plot party success over the years
 
 ggplot(election_by_party, aes(x = Age, y = Percent_won, color = Est, size = .2)) +
-  geom_point() + ggtitle("Dominance of System Parties by Year") + guides(size = F) + xlab("Age of Party") + ylab("Winning Percentage")
+  geom_point() + ggtitle("Dominance of System Parties by Year") + 
+  guides(size = F) + 
+  xlab("Age of Party") + 
+  ylab("Winning Percentage") +
+  theme_fivethirtyeight()
+
+#plot establishment success over the years
+
+ggplot(election_by_party[election_by_party$Age != 0 & !is.na(election_by_party$Age) & election_by_party$Election_date == "SPRING",], aes(x = Year, y = Percent_won, color = Est, size = .1)) + 
+  geom_point() + 
+  ggtitle("The System Throughout the 21st Century") + 
+  guides(size = F) + xlab("Year") + 
+  ylab("Winning Percentage") +
+  theme_fivethirtyeight()
+
+Election_data %>% 
+  group_by(Est) %>% 
+  summarise(M = sum(Won) / n())
+
 #Power ranking by seat
 
 election_by_seat <- Election_data %>% 
   group_by(Seat, Est) %>% 
   summarise(Percent_Won = sum(Won) / n())
 
-ggplot(election_by_seat[election_by_seat$Est == "INDEPENDENT",], aes(x = reorder(Seat, Percent_Won), y = Percent_Won)) +
+library(RColorBrewer)
+colourCount <- length(unique(election_by_seat$Seat)) # number of levels
+getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
+ggplot(election_by_seat[election_by_seat$Est == "INDEPENDENT",], aes(x = reorder(Seat, Percent_Won), y = Percent_Won, fill = Seat)) +
+  scale_fill_manual(values = getPalette(colourCount)) + 
   geom_col() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  ggtitle("Power Ranking of Senate Seats") + xlab("Senate Seat")
+  ggtitle("Power Ranking of Senate Seats") + xlab("Senate Seat") +
+  theme_fivethirtyeight() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  guides(fill = F)
+  
 
 
 #Let's start
