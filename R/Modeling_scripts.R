@@ -21,9 +21,8 @@ election_by_party <- Election_data %>%
 ggplot(election_by_party, aes(x = Age, y = Percent_won, color = Est, size = .2)) +
   geom_point() + ggtitle("Dominance of System Parties by Year") + 
   guides(size = F) + 
-  xlab("Age of Party") + 
-  ylab("Winning Percentage") +
-  theme_fivethirtyeight()
+  theme_fivethirtyeight() +
+  labs(y = "Winning Percentage", x = "Age of Party")
 
 #plot establishment success over the years
 
