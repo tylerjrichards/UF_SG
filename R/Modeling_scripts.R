@@ -128,8 +128,9 @@ logistic_model_params <- ggplot(Spring_logistic_ind, aes(x = reorder(term, -esti
 #let's try classification boundaries instead of logistic regression
 
 #switch to factor
-trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 library(caret)
+
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 svm_Linear <- train(Won ~ . -Year +Seat*Est -Seat, data = Spring_train, method = "svmLinear",
                     trControl=trctrl,
                     preProcess = c("center", "scale"),
